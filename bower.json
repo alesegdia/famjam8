@@ -1,0 +1,21 @@
+{
+  "name": "famjam8",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Alejandro Seguí <alesegdia@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/alesegdia/famjam8",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "phaser": "^2.6.2"
+  }
+}
