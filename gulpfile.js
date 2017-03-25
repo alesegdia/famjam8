@@ -36,10 +36,6 @@ gulp.task('start', function() {
 	gulp.watch('src/**/*.js').on('change', browser_sync.reload);
 });
 
-gulp.task('default', ['dev-build'], function(){
-
-});
-
 gulp.task('package', ['release-build'], function() {
 	var zip_files = [
 		"index.html",
