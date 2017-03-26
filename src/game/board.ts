@@ -14,6 +14,49 @@ class Board {
     this.sprite = game.add.sprite(this.offset.x, this.offset.y, 'board');
     this.fill();
     this.points = 0;
+    this.game.input.onDown.add(this.onClick, this);
+  }
+  // waiting, chosedest
+  clickStatus: string = "waiting"
+  srcGemPos: Phaser.Point
+  onClick(evt:Phaser.Pointer) {
+    var x = evt.clientX - this.offset.x;
+    var y = evt.clientY - this.offset.y;
+    debugger;
+
+    if( x >= 0 && x < 8 * 48 && y >= 0 && y < 11 * 48 ) {
+      var idx = Math.floor(x / 48),
+          idy = Math.floor(y / 48);
+      switch(this.clickStatus) {
+        case "waiting":
+          this.srcGemPos = new Phaser.Point(idx, idy);
+          this.clickStatus = "chosedest";
+          break;
+        case "chosedest":
+          this.trySwap(idx, idy);
+          this.clickStatus = "waiting";
+          break;
+      }
+    }
+  }
+
+  trySwap(x: number, y: number) {
+    if( Math.abs(this.srcGemPos.x - x) + Math.abs(this.srcGemPos.y - y) == 1 ) {
+      this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+      var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
+      var g2 = this.board.get(x, y);
+      var g1pos = new Phaser.Point(g1.sprite.x, g1.sprite.y);
+      g1.sprite.x = g2.sprite.x; g1.sprite.y = g2.sprite.y;
+      g2.sprite.x = g1pos.x; g2.sprite.y = g1pos.y;
+      var tween = this.cleanTable();
+      if( tween !== null ) {
+        tween.onComplete.addOnce(() => {
+          this.fill();
+        });
+      } else {
+        this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+      }
+    }
   }
 
   fillGem(col:number, row:number): Phaser.Tween {
@@ -89,7 +132,7 @@ class Board {
 
   points: number
 
-  public dropdownGems() {
+  public dropdownGems(): Phaser.Tween {
     var last_tween = null;
     for( var x = 0; x < this.board.cols; x++ ) {
       var gap = 0;
@@ -99,6 +142,7 @@ class Board {
           gap++;
         } else {
           if( gap > 0 ) {
+            this.board.swap(x, y, x, y + gap);
             last_tween = gem.tweenTo({y: gem.sprite.y + 48 * gap}, 1000);
           }
         }

@@ -1,12 +1,54 @@
 var Board = (function () {
     function Board(game, width, height) {
+        this.clickStatus = "waiting";
         this.board = new Matrix(width, height);
         this.offset = new Phaser.Point(48, 144);
         this.game = game;
         this.sprite = game.add.sprite(this.offset.x, this.offset.y, 'board');
         this.fill();
         this.points = 0;
+        this.game.input.onDown.add(this.onClick, this);
     }
+    Board.prototype.onClick = function (evt) {
+        var x = evt.clientX - this.offset.x;
+        var y = evt.clientY - this.offset.y;
+        debugger;
+        if (x >= 0 && x < 8 * 48 && y >= 0 && y < 11 * 48) {
+            var idx = Math.floor(x / 48), idy = Math.floor(y / 48);
+            switch (this.clickStatus) {
+                case "waiting":
+                    this.srcGemPos = new Phaser.Point(idx, idy);
+                    this.clickStatus = "chosedest";
+                    break;
+                case "chosedest":
+                    this.trySwap(idx, idy);
+                    this.clickStatus = "waiting";
+                    break;
+            }
+        }
+    };
+    Board.prototype.trySwap = function (x, y) {
+        var _this = this;
+        if (Math.abs(this.srcGemPos.x - x) + Math.abs(this.srcGemPos.y - y) == 1) {
+            this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+            var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
+            var g2 = this.board.get(x, y);
+            var g1pos = new Phaser.Point(g1.sprite.x, g1.sprite.y);
+            g1.sprite.x = g2.sprite.x;
+            g1.sprite.y = g2.sprite.y;
+            g2.sprite.x = g1pos.x;
+            g2.sprite.y = g1pos.y;
+            var tween = this.cleanTable();
+            if (tween !== null) {
+                tween.onComplete.addOnce(function () {
+                    _this.fill();
+                });
+            }
+            else {
+                this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+            }
+        }
+    };
     Board.prototype.fillGem = function (col, row) {
         var gem = new Gem(this.game, col, row);
         gem.setPosition(this.offset.x + col * 48, this.offset.y + row * 48 - 700);
@@ -79,6 +121,7 @@ var Board = (function () {
                 }
                 else {
                     if (gap > 0) {
+                        this.board.swap(x, y, x, y + gap);
                         last_tween = gem.tweenTo({ y: gem.sprite.y + 48 * gap }, 1000);
                     }
                 }

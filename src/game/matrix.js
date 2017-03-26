@@ -19,6 +19,11 @@ var Matrix = (function () {
         enumerable: true,
         configurable: true
     });
+    Matrix.prototype.swap = function (x1, y1, x2, y2) {
+        var e1 = this.get(x1, y1);
+        this.set(x1, y1, this.get(x2, y2));
+        this.set(x2, y2, e1);
+    };
     Object.defineProperty(Matrix.prototype, "rows", {
         get: function () {
             return this.height;

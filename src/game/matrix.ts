@@ -19,6 +19,12 @@ class Matrix<T> {
     return this.width;
   }
 
+  public swap(x1:number, y1:number, x2:number, y2:number) {
+    var e1 = this.get(x1, y1);
+    this.set(x1, y1, this.get(x2, y2));
+    this.set(x2, y2, e1);
+  }
+
   public get rows() {
     return this.height;
   }

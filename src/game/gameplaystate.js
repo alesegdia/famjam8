@@ -25,8 +25,8 @@ var MyModule;
         };
         GameState.prototype.render = function () {
             this.game.debug.font = "90px Sans";
-            this.game.debug.text("Porvoron Crush", 85, 60, "white", "40px Sans");
-            this.game.debug.text(this.board.getPoints(), 85, 80, "white", "20px Sans");
+            this.game.debug.text("Patry-R-Crush", 110, 60, "white", "40px Sans");
+            this.game.debug.text(this.board.getPoints(), 110, 80, "white", "20px Sans");
         };
         return GameState;
     }(Phaser.State));
