@@ -30,8 +30,8 @@ class Gem {
     this.sprite.position.set( x, y );
   }
 
-  public tweenTo(obj: any, t?: number) {
-    return this.game.add.tween(this.sprite).to(obj, t || 4000, Phaser.Easing.Bounce.Out, true);
+  public tweenTo(obj: any, t?: number, type?: (k:number)=>number) {
+    return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
   }
 
   public get gemType(): string {

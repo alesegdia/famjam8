@@ -1,3 +1,33 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var MyModule;
+(function (MyModule) {
+    var AssetsLoaderState = (function (_super) {
+        __extends(AssetsLoaderState, _super);
+        function AssetsLoaderState() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        AssetsLoaderState.prototype.preload = function () {
+            this.game.load.image('bg', 'assets/bg.png');
+            this.game.load.image('board', 'assets/board.png');
+            this.game.load.spritesheet('polvorones', 'assets/balls.png', 48, 48, 6);
+        };
+        AssetsLoaderState.prototype.create = function () {
+            this.game.state.start("GameState");
+        };
+        return AssetsLoaderState;
+    }(Phaser.State));
+    MyModule.AssetsLoaderState = AssetsLoaderState;
+})(MyModule || (MyModule = {}));
+
 var Board = (function () {
     function Board(game, width, height) {
         this.clickStatus = "waiting";
@@ -235,4 +265,153 @@ var Board = (function () {
         return punctuations;
     };
     return Board;
+}());
+
+var MyModule;
+(function (MyModule) {
+    var Game = (function () {
+        function Game() {
+            var canvas_width = 480, canvas_height = 720;
+            this.game = new Phaser.Game(canvas_width, canvas_height, Phaser.CANVAS, 'content');
+            this.game.state.add("AssetsLoaderState", MyModule.AssetsLoaderState, false);
+            this.game.state.add("GameState", MyModule.GameState, false);
+            this.game.state.start("AssetsLoaderState", true, true);
+        }
+        Game.prototype.preload = function () {
+        };
+        return Game;
+    }());
+    MyModule.Game = Game;
+})(MyModule || (MyModule = {}));
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var MyModule;
+(function (MyModule) {
+    var GameState = (function (_super) {
+        __extends(GameState, _super);
+        function GameState() {
+            return _super.call(this) || this;
+        }
+        GameState.prototype.preload = function () {
+        };
+        GameState.prototype.create = function () {
+            var sample_sprite = this.game.add.sprite(0, 0, 'bg');
+            sample_sprite.anchor.setTo(0, 0);
+            this.game.stage.backgroundColor = "#5fcde4";
+            this.board = new Board(this.game, 8, 11);
+        };
+        GameState.prototype.render = function () {
+            this.game.debug.font = "90px Sans";
+            this.game.debug.text("Patry-R-Crush", 110, 60, "white", "40px Sans");
+            this.game.debug.text(this.board.getPoints(), 110, 80, "white", "20px Sans");
+        };
+        return GameState;
+    }(Phaser.State));
+    MyModule.GameState = GameState;
+})(MyModule || (MyModule = {}));
+
+var type_to_int = {
+    "yellow": 0, "orange": 1, "red": 2, "blue": 3, "green": 4, "purple": 5
+};
+var valid_types = [
+    "yellow", "orange", "red", "green", "blue", "purple"
+];
+var Gem = (function () {
+    function Gem(game, col, row, type) {
+        this.game = game;
+        this.sprite = this.game.add.sprite(0, 0, "polvorones");
+        this.sprite.anchor.setTo(0, 0);
+        this.gridPosition = new Phaser.Point(col, row);
+        this.type = type || valid_types[this.game.rnd.integerInRange(0, valid_types.length - 1)];
+        this.sprite.frame = type_to_int[this.type];
+    }
+    Gem.prototype.destroy = function () {
+        this.sprite.destroy();
+    };
+    Gem.prototype.setPosition = function (x, y) {
+        this.sprite.position.set(x, y);
+    };
+    Gem.prototype.tweenTo = function (obj, t, type) {
+        return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
+    };
+    Object.defineProperty(Gem.prototype, "gemType", {
+        get: function () {
+            return this.type;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return Gem;
+}());
+
+window.onload = function () {
+    var game = new MyModule.Game();
+};
+
+var Matrix = (function () {
+    function Matrix(width, height, data) {
+        this.width = width;
+        this.height = height;
+        if (data) {
+            this.data = data;
+            if (this.data.length != width * height) {
+                throw new Error("Provided data doesn't fit size");
+            }
+        }
+        else {
+            this.fill(null);
+        }
+    }
+    Object.defineProperty(Matrix.prototype, "cols", {
+        get: function () {
+            return this.width;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Matrix.prototype.swap = function (x1, y1, x2, y2) {
+        var e1 = this.get(x1, y1);
+        this.set(x1, y1, this.get(x2, y2));
+        this.set(x2, y2, e1);
+    };
+    Object.defineProperty(Matrix.prototype, "rows", {
+        get: function () {
+            return this.height;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Matrix.prototype.fill = function (value) {
+        this.data = [];
+        for (var i = 0; i < this.width * this.height; i++) {
+            this.data.push(value);
+        }
+    };
+    Matrix.prototype.assertAccess = function (col, row) {
+        if (col < 0 && col >= this.width &&
+            row < 0 && row >= this.height) {
+            throw Error("wrong index");
+        }
+    };
+    Matrix.prototype.coordToIndex = function (col, row) {
+        return row * this.width + col;
+    };
+    Matrix.prototype.get = function (col, row) {
+        this.assertAccess(col, row);
+        return this.data[this.coordToIndex(col, row)];
+    };
+    Matrix.prototype.set = function (col, row, value) {
+        this.assertAccess(col, row);
+        this.data[this.coordToIndex(col, row)] = value;
+    };
+    return Matrix;
 }());

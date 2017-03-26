@@ -45,17 +45,22 @@ class Board {
       this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
       var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
       var g2 = this.board.get(x, y);
-      var g1pos = new Phaser.Point(g1.sprite.x, g1.sprite.y);
-      g1.sprite.x = g2.sprite.x; g1.sprite.y = g2.sprite.y;
-      g2.sprite.x = g1pos.x; g2.sprite.y = g1pos.y;
-      var tween = this.cleanTable();
-      if( tween !== null ) {
-        tween.onComplete.addOnce(() => {
-          this.fill();
-        });
-      } else {
-        this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
-      }
+      g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 500, Phaser.Easing.Cubic.Out);
+      var tween = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 500, Phaser.Easing.Cubic.Out);
+      tween.onComplete.addOnce(() => {
+        var tween = this.cleanTable();
+        if( tween !== null ) {
+          tween.onComplete.addOnce(() => {
+            this.fill();
+          });
+        } else {
+          this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+          var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
+          var g2 = this.board.get(x, y);
+          g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 2000, Phaser.Easing.Cubic.Out);
+          var tween = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 2000, Phaser.Easing.Cubic.Out);
+        }
+      })
     }
   }
 

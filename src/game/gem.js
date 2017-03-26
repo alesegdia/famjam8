@@ -19,8 +19,8 @@ var Gem = (function () {
     Gem.prototype.setPosition = function (x, y) {
         this.sprite.position.set(x, y);
     };
-    Gem.prototype.tweenTo = function (obj, t) {
-        return this.game.add.tween(this.sprite).to(obj, t || 4000, Phaser.Easing.Bounce.Out, true);
+    Gem.prototype.tweenTo = function (obj, t, type) {
+        return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
     };
     Object.defineProperty(Gem.prototype, "gemType", {
         get: function () {
