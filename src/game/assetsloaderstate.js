@@ -18,6 +18,7 @@ var MyModule;
         AssetsLoaderState.prototype.preload = function () {
             this.game.load.image('bg', 'assets/bg.png');
             this.game.load.image('board', 'assets/board.png');
+            this.game.load.image('marker', 'assets/marker.png');
             this.game.load.spritesheet('polvorones', 'assets/balls.png', 48, 48, 6);
         };
         AssetsLoaderState.prototype.create = function () {

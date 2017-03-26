@@ -5,6 +5,7 @@ var Board = (function () {
         this.offset = new Phaser.Point(48, 144);
         this.game = game;
         this.sprite = game.add.sprite(this.offset.x, this.offset.y, 'board');
+        this.marker = game.add.sprite(-100, -100, 'marker');
         this.fill();
         this.points = 0;
         this.game.input.onDown.add(this.onClick, this);
@@ -19,13 +20,23 @@ var Board = (function () {
                 case "waiting":
                     this.srcGemPos = new Phaser.Point(idx, idy);
                     this.clickStatus = "chosedest";
+                    this.putMarker(idx, idy);
                     break;
                 case "chosedest":
                     this.trySwap(idx, idy);
+                    this.clearMarker();
                     this.clickStatus = "waiting";
                     break;
             }
         }
+    };
+    Board.prototype.clearMarker = function () {
+        this.marker.x = -100;
+        this.marker.y = -100;
+    };
+    Board.prototype.putMarker = function (idx, idy) {
+        this.marker.x = this.offset.x + idx * 48;
+        this.marker.y = this.offset.y + idy * 48;
     };
     Board.prototype.trySwap = function (x, y) {
         var _this = this;
@@ -33,8 +44,8 @@ var Board = (function () {
             this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
             var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
             var g2 = this.board.get(x, y);
-            g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 500, Phaser.Easing.Cubic.Out);
-            var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 500, Phaser.Easing.Cubic.Out);
+            g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+            var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
             tween.onComplete.addOnce(function () {
                 var tween = _this.cleanTable();
                 if (tween !== null) {
@@ -46,8 +57,10 @@ var Board = (function () {
                     _this.board.swap(_this.srcGemPos.x, _this.srcGemPos.y, x, y);
                     var g1 = _this.board.get(_this.srcGemPos.x, _this.srcGemPos.y);
                     var g2 = _this.board.get(x, y);
-                    g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 2000, Phaser.Easing.Cubic.Out);
-                    var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 2000, Phaser.Easing.Cubic.Out);
+                    console.log(g1);
+                    console.log(g2);
+                    g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+                    var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
                 }
             });
         }
@@ -70,14 +83,16 @@ var Board = (function () {
                 }
             }
         }
-        last_tween.onComplete.addOnce(function () {
-            var tween = _this.cleanTable();
-            if (tween !== null) {
-                tween.onComplete.addOnce(function () {
-                    _this.fill();
-                });
-            }
-        });
+        if (last_tween) {
+            last_tween.onComplete.addOnce(function () {
+                var tween = _this.cleanTable();
+                if (tween !== null) {
+                    tween.onComplete.addOnce(function () {
+                        _this.fill();
+                    });
+                }
+            });
+        }
     };
     Board.prototype.emptyGaps = function () {
         for (var i = 0; i < this.board.cols; i++) {
