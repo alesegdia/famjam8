@@ -55,4 +55,4 @@ var Matrix = (function () {
         this.data[this.coordToIndex(col, row)] = value;
     };
     return Matrix;
-}());
+})();

@@ -1,19 +1,15 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var MyModule;
 (function (MyModule) {
     var AssetsLoaderState = (function (_super) {
         __extends(AssetsLoaderState, _super);
         function AssetsLoaderState() {
-            return _super !== null && _super.apply(this, arguments) || this;
+            _super.apply(this, arguments);
         }
         AssetsLoaderState.prototype.preload = function () {
             this.game.load.image('bg', 'assets/bg.png');
@@ -25,12 +21,16 @@ var MyModule;
             this.game.state.start("GameState");
         };
         return AssetsLoaderState;
-    }(Phaser.State));
+    })(Phaser.State);
     MyModule.AssetsLoaderState = AssetsLoaderState;
 })(MyModule || (MyModule = {}));
 
+/// <reference path="./matrix.ts" />
+/// <reference path="./gem.ts" />
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var Board = (function () {
     function Board(game, width, height) {
+        // waiting, chosedest
         this.clickStatus = "waiting";
         this.board = new Matrix(width, height);
         this.offset = new Phaser.Point(48, 144);
@@ -75,25 +75,29 @@ var Board = (function () {
             this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
             var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
             var g2 = this.board.get(x, y);
-            g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-            var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-            tween.onComplete.addOnce(function () {
-                var tween = _this.cleanTable();
-                if (tween !== null) {
-                    tween.onComplete.addOnce(function () {
+            var token = 0;
+            var fn = function () {
+                token = token + 1;
+                if (token == 2) {
+                    var tween = _this.cleanTable();
+                    if (tween !== null) {
                         _this.fill();
-                    });
+                    }
+                    else {
+                        _this.board.swap(_this.srcGemPos.x, _this.srcGemPos.y, x, y);
+                        var g1 = _this.board.get(_this.srcGemPos.x, _this.srcGemPos.y);
+                        var g2 = _this.board.get(x, y);
+                        console.log(g1);
+                        console.log(g2);
+                        g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+                        g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+                    }
                 }
-                else {
-                    _this.board.swap(_this.srcGemPos.x, _this.srcGemPos.y, x, y);
-                    var g1 = _this.board.get(_this.srcGemPos.x, _this.srcGemPos.y);
-                    var g2 = _this.board.get(x, y);
-                    console.log(g1);
-                    console.log(g2);
-                    g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-                    var tween = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-                }
-            });
+            };
+            var tween1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+            var tween2 = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+            tween1.onComplete.addOnce(fn);
+            tween2.onComplete.addOnce(fn);
         }
     };
     Board.prototype.fillGem = function (col, row) {
@@ -118,9 +122,7 @@ var Board = (function () {
             last_tween.onComplete.addOnce(function () {
                 var tween = _this.cleanTable();
                 if (tween !== null) {
-                    tween.onComplete.addOnce(function () {
-                        _this.fill();
-                    });
+                    _this.fill();
                 }
             });
         }
@@ -175,6 +177,9 @@ var Board = (function () {
                     }
                 }
             }
+            if (gap != 0) {
+                last_tween = 0xDEADBEEF;
+            }
         }
         return last_tween;
     };
@@ -203,7 +208,7 @@ var Board = (function () {
                 start_value = e.from.y;
                 end_value = e.to.y;
             }
-            for (var k = start_value; k < end_value; k++) {
+            for (var k = start_value; k <= end_value; k++) {
                 destroy_element(k, e.from);
             }
         }
@@ -252,10 +257,12 @@ var Board = (function () {
             for (var j = 1; j < inner_top; j++) {
                 var new_gem = get_gem(i, j);
                 var try_push_strike = false;
+                var was_last = false;
                 if (new_gem.gemType == strike_type) {
                     strike_count++;
                     if (j == inner_top - 1) {
                         try_push_strike = true;
+                        was_last = true;
                     }
                 }
                 else {
@@ -263,10 +270,14 @@ var Board = (function () {
                 }
                 if (try_push_strike) {
                     if (strike_count >= 3) {
+                        var rj = j;
+                        if (false == was_last) {
+                            rj--;
+                        }
                         var punctuation = {
                             dir: direction,
                             from: start_strike,
-                            to: create_point(i, j),
+                            to: create_point(i, rj),
                             type: strike_type,
                             count: strike_count
                         };
@@ -281,8 +292,11 @@ var Board = (function () {
         return punctuations;
     };
     return Board;
-}());
+})();
 
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
+/// <reference path="./assetsloaderstate.ts" />
+/// <reference path="./gameplaystate.ts" />
 var MyModule;
 (function (MyModule) {
     var Game = (function () {
@@ -296,26 +310,22 @@ var MyModule;
         Game.prototype.preload = function () {
         };
         return Game;
-    }());
+    })();
     MyModule.Game = Game;
 })(MyModule || (MyModule = {}));
 
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var MyModule;
 (function (MyModule) {
     var GameState = (function (_super) {
         __extends(GameState, _super);
         function GameState() {
-            return _super.call(this) || this;
+            _super.call(this);
         }
         GameState.prototype.preload = function () {
         };
@@ -324,6 +334,7 @@ var MyModule;
             sample_sprite.anchor.setTo(0, 0);
             this.game.stage.backgroundColor = "#5fcde4";
             this.board = new Board(this.game, 8, 11);
+            //this.game.time.events.add(Phaser.Timer.SECOND * 4, Board.cleanTable, this.board);
         };
         GameState.prototype.render = function () {
             this.game.debug.font = "90px Sans";
@@ -331,10 +342,11 @@ var MyModule;
             this.game.debug.text(this.board.getPoints(), 110, 80, "white", "20px Sans");
         };
         return GameState;
-    }(Phaser.State));
+    })(Phaser.State);
     MyModule.GameState = GameState;
 })(MyModule || (MyModule = {}));
 
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var type_to_int = {
     "yellow": 0, "orange": 1, "red": 2, "blue": 3, "green": 4, "purple": 5
 };
@@ -367,8 +379,9 @@ var Gem = (function () {
         configurable: true
     });
     return Gem;
-}());
+})();
 
+/// <reference path="./game.ts" />
 window.onload = function () {
     var game = new MyModule.Game();
 };
@@ -430,4 +443,4 @@ var Matrix = (function () {
         this.data[this.coordToIndex(col, row)] = value;
     };
     return Matrix;
-}());
+})();

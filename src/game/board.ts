@@ -42,6 +42,7 @@ class Board {
           break;
       }
     }
+
   }
 
   clearMarker() {
@@ -59,24 +60,29 @@ class Board {
       this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
       var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
       var g2 = this.board.get(x, y);
-      g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
-      var tween = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
-      tween.onComplete.addOnce(() => {
-        var tween = this.cleanTable();
-        if( tween !== null ) {
-          tween.onComplete.addOnce(() => {
-            this.fill();
-          });
-        } else {
-          this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
-          var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
-          var g2 = this.board.get(x, y);
-          console.log(g1);
-          console.log(g2);
-          g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
-          var tween = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+      var token = 0;
+      var fn = () => {
+        token = token + 1;
+        if( token == 2 )
+        {
+            var tween = this.cleanTable();
+            if( tween !== null ) {
+                    this.fill();
+            } else {
+              this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
+              var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
+              var g2 = this.board.get(x, y);
+              console.log(g1);
+              console.log(g2);
+              g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+              g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+            }
         }
-      })
+      };
+      var tween1 = g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+      var tween2 = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+      tween1.onComplete.addOnce(fn);
+      tween2.onComplete.addOnce(fn);
     }
   }
 
@@ -104,9 +110,7 @@ class Board {
       last_tween.onComplete.addOnce(() => {
         var tween = this.cleanTable();
         if( tween !== null ) {
-          tween.onComplete.addOnce(() => {
             this.fill();
-          });
         }
       });
     }
@@ -170,6 +174,10 @@ class Board {
           }
         }
       }
+      if( gap != 0 )
+      {
+          last_tween = 0xDEADBEEF;
+      }
     }
     return last_tween;
   }
@@ -198,7 +206,7 @@ class Board {
         start_value = e.from.y;
         end_value = e.to.y;
       }
-      for( var k = start_value; k < end_value; k++ ) {
+      for( var k = start_value; k <= end_value; k++ ) {
         destroy_element(k, e.from);
       }
     }
@@ -242,6 +250,7 @@ class Board {
       inner_top = this.board.cols;
     }
 
+
     var punctuations = [];
     for( var i = 0; i < outer_top; i++ ) {
       var strike_count = 1;
@@ -250,20 +259,27 @@ class Board {
       for( var j = 1; j < inner_top; j++ ) {
         var new_gem = get_gem(i, j);
         var try_push_strike = false;
+        var was_last = false;
         if( new_gem.gemType == strike_type ) {
           strike_count++;
           if( j == inner_top - 1) {
             try_push_strike = true;
+            was_last = true;
           }
         } else {
           try_push_strike = true;
         }
         if( try_push_strike ){
           if( strike_count >= 3 ) {
+            var rj = j;
+            if( false == was_last )
+            {
+                  rj--;
+            }
             var punctuation = {
               dir: direction,
               from: start_strike,
-              to: create_point(i, j),
+              to: create_point(i, rj),
               type: strike_type,
               count: strike_count
             };

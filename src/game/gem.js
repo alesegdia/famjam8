@@ -1,3 +1,4 @@
+/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var type_to_int = {
     "yellow": 0, "orange": 1, "red": 2, "blue": 3, "green": 4, "purple": 5
 };
@@ -30,4 +31,4 @@ var Gem = (function () {
         configurable: true
     });
     return Gem;
-}());
+})();
