@@ -8,6 +8,7 @@ class Board {
   offset: Phaser.Point
   game: Phaser.Game
   marker: Phaser.Sprite
+  blocked: boolean
   constructor(game: Phaser.Game, width: number, height: number) {
     this.board = new Matrix<Gem>(width, height);
     this.offset = new Phaser.Point(48, 144);
@@ -17,14 +18,15 @@ class Board {
     this.fill();
     this.points = 0;
     this.game.input.onDown.add(this.onClick, this);
+    this.blocked = false;
   }
   // waiting, chosedest
   clickStatus: string = "waiting"
   srcGemPos: Phaser.Point
   onClick(evt:Phaser.Pointer) {
+    if(this.blocked) return;
     var x = evt.clientX - this.offset.x;
     var y = evt.clientY - this.offset.y;
-    debugger;
 
     if( x >= 0 && x < 8 * 48 && y >= 0 && y < 11 * 48 ) {
       var idx = Math.floor(x / 48),
@@ -57,6 +59,8 @@ class Board {
 
   trySwap(x: number, y: number) {
     if( Math.abs(this.srcGemPos.x - x) + Math.abs(this.srcGemPos.y - y) == 1 ) {
+      debugger;
+      this.blocked = true;
       this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
       var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
       var g2 = this.board.get(x, y);
@@ -74,13 +78,14 @@ class Board {
               var g2 = this.board.get(x, y);
               console.log(g1);
               console.log(g2);
-              g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
-              g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+              var gt1 = g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 100, Phaser.Easing.Quartic.Out);
+              g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 100, Phaser.Easing.Quartic.Out);
+              gt1.onComplete.addOnce(() => { debugger; this.blocked = false; })
             }
         }
       };
-      var tween1 = g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 200, Phaser.Easing.Quartic.Out);
-      var tween2 = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 200, Phaser.Easing.Quartic.Out);
+      var tween1 = g1.tweenTo({x:g2.sprite.x, y:g2.sprite.y}, 100, Phaser.Easing.Quartic.Out);
+      var tween2 = g2.tweenTo({x:g1.sprite.x, y:g1.sprite.y}, 100, Phaser.Easing.Quartic.Out);
       tween1.onComplete.addOnce(fn);
       tween2.onComplete.addOnce(fn);
     }
@@ -89,12 +94,14 @@ class Board {
   fillGem(col:number, row:number): Phaser.Tween {
     var gem = new Gem(this.game, col, row);
     gem.setPosition(this.offset.x + col * 48, this.offset.y + row * 48 - 700);
-    var tween = gem.tweenTo({y: this.offset.y + row * 48}, 1000);
+    var tween = gem.tweenTo({y: this.offset.y + row * 48}, 300);
     this.board.set(col, row, gem);
     return tween;
   }
 
   fill() {
+    debugger;
+    this.blocked = true;
     var last_tween: Phaser.Tween;
 
     for( var i = 0; i < this.board.cols; i++ ) {
@@ -170,7 +177,8 @@ class Board {
         } else {
           if( gap > 0 ) {
             this.board.swap(x, y, x, y + gap);
-            last_tween = gem.tweenTo({y: gem.sprite.y + 48 * gap}, 1000);
+            last_tween = gem.tweenTo({y: gem.sprite.y + 48 * gap}, 300);
+            last_tween.onComplete.addOnce(() => { debugger; this.blocked = false; });
           }
         }
       }

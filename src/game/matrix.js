@@ -16,7 +16,7 @@ var Matrix = (function () {
         get: function () {
             return this.width;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Matrix.prototype.swap = function (x1, y1, x2, y2) {
@@ -28,7 +28,7 @@ var Matrix = (function () {
         get: function () {
             return this.height;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Matrix.prototype.fill = function (value) {
@@ -55,4 +55,4 @@ var Matrix = (function () {
         this.data[this.coordToIndex(col, row)] = value;
     };
     return Matrix;
-})();
+}());

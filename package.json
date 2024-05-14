@@ -23,9 +23,10 @@
   },
   "devDependencies": {
     "browser-sync": "^2.18.8",
-    "gulp": "^3.9.1",
+    "gulp": "^5.0.0",
     "gulp-connect": "^5.0.0",
-    "gulp-watch": "^4.3.11",
-    "gulp-zip": "^4.0.0"
+    "gulp-watch": "^3.0.0",
+    "gulp-zip": "^4.0.0",
+    "typescript": "^5.4.5"
   }
 }

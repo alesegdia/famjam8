@@ -1,6 +1,3 @@
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
-/// <reference path="./assetsloaderstate.ts" />
-/// <reference path="./gameplaystate.ts" />
 var MyModule;
 (function (MyModule) {
     var Game = (function () {
@@ -14,6 +11,6 @@ var MyModule;
         Game.prototype.preload = function () {
         };
         return Game;
-    })();
+    }());
     MyModule.Game = Game;
 })(MyModule || (MyModule = {}));

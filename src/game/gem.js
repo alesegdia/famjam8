@@ -1,4 +1,3 @@
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var type_to_int = {
     "yellow": 0, "orange": 1, "red": 2, "blue": 3, "green": 4, "purple": 5
 };
@@ -21,14 +20,14 @@ var Gem = (function () {
         this.sprite.position.set(x, y);
     };
     Gem.prototype.tweenTo = function (obj, t, type) {
-        return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
+        return this.game.add.tween(this.sprite).to(obj, t || 1000, type || Phaser.Easing.Bounce.Out, true);
     };
     Object.defineProperty(Gem.prototype, "gemType", {
         get: function () {
             return this.type;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     return Gem;
-})();
+}());

@@ -1,49 +1,55 @@
-var gulp = require('gulp'),
-	concat = require('gulp-concat'),
-	rename = require('gulp-rename'),
-	uglify = require('gulp-uglify'),
- 	zip = require('gulp-zip'),
-	browser_sync = require('browser-sync').create();
+const gulp = require('gulp');
+const concat = require('gulp-concat');
+const rename = require('gulp-rename');
+const uglify = require('gulp-uglify').default;
+const zip = require('gulp-zip');
+const browserSync = require('browser-sync').create();
 
-var DEST_DIR = 'dist';
+const DEST_DIR = 'dist';
 
-gulp.task('build', function() {
-	return gulp.src("src/game/**/*.js")
-	.pipe(concat('game.js'))
-	.pipe(uglify())
-	.pipe(rename({extname: '.min.js'}))
-	.pipe(gulp.dest(DEST_DIR));
-});
+function build() {
+    return gulp.src("src/game/**/*.js")
+        .pipe(concat('game.js'))
+        .pipe(uglify())
+        .pipe(rename({extname: '.min.js'}))
+        .pipe(gulp.dest(DEST_DIR));
+}
 
-gulp.task('dev-build', function () {
-	return gulp.src("src/game/**/*.js")
-		.pipe(concat('game.js'))
-		.pipe(gulp.dest(DEST_DIR));
-});
+function devBuild() {
+    return gulp.src("src/game/**/*.js")
+        .pipe(concat('game.js'))
+        .pipe(gulp.dest(DEST_DIR));
+}
 
-gulp.task('release-build', function() {
-	return gulp.src("src/game/**/*.js")
-		.pipe(concat('game.js'))
-		.pipe(uglify())
-		.pipe(gulp.dest(DEST_DIR));
-});
+function releaseBuild() {
+    return gulp.src("src/game/**/*.js")
+        .pipe(concat('game.js'))
+        .pipe(uglify())
+        .pipe(gulp.dest(DEST_DIR));
+}
 
-gulp.task('start', function() {
-	browser_sync.init({
-			proxy: "0.0.0.0:8000"
-	});
-	gulp.watch('src/**/*.js', ['dev-build']);
-	gulp.watch('src/**/*.js').on('change', browser_sync.reload);
-});
+function start() {
+    browserSync.init({
+        proxy: "0.0.0.0:8000"
+    });
+    gulp.watch('src/**/*.js', gulp.series('devBuild'));
+    gulp.watch('src/**/*.js').on('change', browserSync.reload);
+}
 
-gulp.task('package', ['release-build'], function() {
-	var zip_files = [
-		"index.html",
-		"dist/game.js",
-		"src/lib/phaser/build/phaser.js",
-		"assets/**/*"
-	];
-	gulp.src(zip_files, { base : "." })
-		.pipe(zip('dist.zip'))
-		.pipe(gulp.dest('.'));
-});
+function package() {
+    const zipFiles = [
+        "index.html",
+        "dist/game.js",
+        "src/lib/phaser/build/phaser.js",
+        "assets/**/*"
+    ];
+    return gulp.src(zipFiles, { base : "." })
+        .pipe(zip('dist.zip'))
+        .pipe(gulp.dest('.'));
+}
+
+exports.build = build;
+exports.devBuild = devBuild;
+exports.releaseBuild = releaseBuild;
+exports.start = start;
+exports.package = gulp.series(releaseBuild, package);

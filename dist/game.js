@@ -1,15 +1,24 @@
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var MyModule;
 (function (MyModule) {
     var AssetsLoaderState = (function (_super) {
         __extends(AssetsLoaderState, _super);
         function AssetsLoaderState() {
-            _super.apply(this, arguments);
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         AssetsLoaderState.prototype.preload = function () {
             this.game.load.image('bg', 'assets/bg.png');
@@ -21,16 +30,12 @@ var MyModule;
             this.game.state.start("GameState");
         };
         return AssetsLoaderState;
-    })(Phaser.State);
+    }(Phaser.State));
     MyModule.AssetsLoaderState = AssetsLoaderState;
 })(MyModule || (MyModule = {}));
 
-/// <reference path="./matrix.ts" />
-/// <reference path="./gem.ts" />
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var Board = (function () {
     function Board(game, width, height) {
-        // waiting, chosedest
         this.clickStatus = "waiting";
         this.board = new Matrix(width, height);
         this.offset = new Phaser.Point(48, 144);
@@ -40,11 +45,13 @@ var Board = (function () {
         this.fill();
         this.points = 0;
         this.game.input.onDown.add(this.onClick, this);
+        this.blocked = false;
     }
     Board.prototype.onClick = function (evt) {
+        if (this.blocked)
+            return;
         var x = evt.clientX - this.offset.x;
         var y = evt.clientY - this.offset.y;
-        debugger;
         if (x >= 0 && x < 8 * 48 && y >= 0 && y < 11 * 48) {
             var idx = Math.floor(x / 48), idy = Math.floor(y / 48);
             switch (this.clickStatus) {
@@ -72,6 +79,8 @@ var Board = (function () {
     Board.prototype.trySwap = function (x, y) {
         var _this = this;
         if (Math.abs(this.srcGemPos.x - x) + Math.abs(this.srcGemPos.y - y) == 1) {
+            debugger;
+            this.blocked = true;
             this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
             var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
             var g2 = this.board.get(x, y);
@@ -89,13 +98,14 @@ var Board = (function () {
                         var g2 = _this.board.get(x, y);
                         console.log(g1);
                         console.log(g2);
-                        g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-                        g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+                        var gt1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+                        g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+                        gt1.onComplete.addOnce(function () { debugger; _this.blocked = false; });
                     }
                 }
             };
-            var tween1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-            var tween2 = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+            var tween1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+            var tween2 = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 100, Phaser.Easing.Quartic.Out);
             tween1.onComplete.addOnce(fn);
             tween2.onComplete.addOnce(fn);
         }
@@ -103,12 +113,14 @@ var Board = (function () {
     Board.prototype.fillGem = function (col, row) {
         var gem = new Gem(this.game, col, row);
         gem.setPosition(this.offset.x + col * 48, this.offset.y + row * 48 - 700);
-        var tween = gem.tweenTo({ y: this.offset.y + row * 48 }, 1000);
+        var tween = gem.tweenTo({ y: this.offset.y + row * 48 }, 300);
         this.board.set(col, row, gem);
         return tween;
     };
     Board.prototype.fill = function () {
         var _this = this;
+        debugger;
+        this.blocked = true;
         var last_tween;
         for (var i = 0; i < this.board.cols; i++) {
             for (var j = 0; j < this.board.rows; j++) {
@@ -162,6 +174,7 @@ var Board = (function () {
         return this.dropdownGems();
     };
     Board.prototype.dropdownGems = function () {
+        var _this = this;
         var last_tween = null;
         for (var x = 0; x < this.board.cols; x++) {
             var gap = 0;
@@ -173,7 +186,8 @@ var Board = (function () {
                 else {
                     if (gap > 0) {
                         this.board.swap(x, y, x, y + gap);
-                        last_tween = gem.tweenTo({ y: gem.sprite.y + 48 * gap }, 1000);
+                        last_tween = gem.tweenTo({ y: gem.sprite.y + 48 * gap }, 300);
+                        last_tween.onComplete.addOnce(function () { debugger; _this.blocked = false; });
                     }
                 }
             }
@@ -292,11 +306,8 @@ var Board = (function () {
         return punctuations;
     };
     return Board;
-})();
+}());
 
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
-/// <reference path="./assetsloaderstate.ts" />
-/// <reference path="./gameplaystate.ts" />
 var MyModule;
 (function (MyModule) {
     var Game = (function () {
@@ -310,22 +321,31 @@ var MyModule;
         Game.prototype.preload = function () {
         };
         return Game;
-    })();
+    }());
     MyModule.Game = Game;
 })(MyModule || (MyModule = {}));
 
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var MyModule;
 (function (MyModule) {
     var GameState = (function (_super) {
         __extends(GameState, _super);
         function GameState() {
-            _super.call(this);
+            return _super.call(this) || this;
         }
         GameState.prototype.preload = function () {
         };
@@ -334,7 +354,6 @@ var MyModule;
             sample_sprite.anchor.setTo(0, 0);
             this.game.stage.backgroundColor = "#5fcde4";
             this.board = new Board(this.game, 8, 11);
-            //this.game.time.events.add(Phaser.Timer.SECOND * 4, Board.cleanTable, this.board);
         };
         GameState.prototype.render = function () {
             this.game.debug.font = "90px Sans";
@@ -342,11 +361,10 @@ var MyModule;
             this.game.debug.text(this.board.getPoints(), 110, 80, "white", "20px Sans");
         };
         return GameState;
-    })(Phaser.State);
+    }(Phaser.State));
     MyModule.GameState = GameState;
 })(MyModule || (MyModule = {}));
 
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var type_to_int = {
     "yellow": 0, "orange": 1, "red": 2, "blue": 3, "green": 4, "purple": 5
 };
@@ -369,19 +387,18 @@ var Gem = (function () {
         this.sprite.position.set(x, y);
     };
     Gem.prototype.tweenTo = function (obj, t, type) {
-        return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
+        return this.game.add.tween(this.sprite).to(obj, t || 1000, type || Phaser.Easing.Bounce.Out, true);
     };
     Object.defineProperty(Gem.prototype, "gemType", {
         get: function () {
             return this.type;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     return Gem;
-})();
+}());
 
-/// <reference path="./game.ts" />
 window.onload = function () {
     var game = new MyModule.Game();
 };
@@ -404,7 +421,7 @@ var Matrix = (function () {
         get: function () {
             return this.width;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Matrix.prototype.swap = function (x1, y1, x2, y2) {
@@ -416,7 +433,7 @@ var Matrix = (function () {
         get: function () {
             return this.height;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Matrix.prototype.fill = function (value) {
@@ -443,4 +460,4 @@ var Matrix = (function () {
         this.data[this.coordToIndex(col, row)] = value;
     };
     return Matrix;
-})();
+}());

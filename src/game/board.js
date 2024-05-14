@@ -1,9 +1,5 @@
-/// <reference path="./matrix.ts" />
-/// <reference path="./gem.ts" />
-/// <reference path="../lib/phaser/typescript/phaser.d.ts" />
 var Board = (function () {
     function Board(game, width, height) {
-        // waiting, chosedest
         this.clickStatus = "waiting";
         this.board = new Matrix(width, height);
         this.offset = new Phaser.Point(48, 144);
@@ -13,11 +9,13 @@ var Board = (function () {
         this.fill();
         this.points = 0;
         this.game.input.onDown.add(this.onClick, this);
+        this.blocked = false;
     }
     Board.prototype.onClick = function (evt) {
+        if (this.blocked)
+            return;
         var x = evt.clientX - this.offset.x;
         var y = evt.clientY - this.offset.y;
-        debugger;
         if (x >= 0 && x < 8 * 48 && y >= 0 && y < 11 * 48) {
             var idx = Math.floor(x / 48), idy = Math.floor(y / 48);
             switch (this.clickStatus) {
@@ -45,6 +43,8 @@ var Board = (function () {
     Board.prototype.trySwap = function (x, y) {
         var _this = this;
         if (Math.abs(this.srcGemPos.x - x) + Math.abs(this.srcGemPos.y - y) == 1) {
+            debugger;
+            this.blocked = true;
             this.board.swap(this.srcGemPos.x, this.srcGemPos.y, x, y);
             var g1 = this.board.get(this.srcGemPos.x, this.srcGemPos.y);
             var g2 = this.board.get(x, y);
@@ -62,13 +62,14 @@ var Board = (function () {
                         var g2 = _this.board.get(x, y);
                         console.log(g1);
                         console.log(g2);
-                        g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-                        g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+                        var gt1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+                        g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+                        gt1.onComplete.addOnce(function () { debugger; _this.blocked = false; });
                     }
                 }
             };
-            var tween1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 200, Phaser.Easing.Quartic.Out);
-            var tween2 = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 200, Phaser.Easing.Quartic.Out);
+            var tween1 = g1.tweenTo({ x: g2.sprite.x, y: g2.sprite.y }, 100, Phaser.Easing.Quartic.Out);
+            var tween2 = g2.tweenTo({ x: g1.sprite.x, y: g1.sprite.y }, 100, Phaser.Easing.Quartic.Out);
             tween1.onComplete.addOnce(fn);
             tween2.onComplete.addOnce(fn);
         }
@@ -76,12 +77,14 @@ var Board = (function () {
     Board.prototype.fillGem = function (col, row) {
         var gem = new Gem(this.game, col, row);
         gem.setPosition(this.offset.x + col * 48, this.offset.y + row * 48 - 700);
-        var tween = gem.tweenTo({ y: this.offset.y + row * 48 }, 1000);
+        var tween = gem.tweenTo({ y: this.offset.y + row * 48 }, 300);
         this.board.set(col, row, gem);
         return tween;
     };
     Board.prototype.fill = function () {
         var _this = this;
+        debugger;
+        this.blocked = true;
         var last_tween;
         for (var i = 0; i < this.board.cols; i++) {
             for (var j = 0; j < this.board.rows; j++) {
@@ -135,6 +138,7 @@ var Board = (function () {
         return this.dropdownGems();
     };
     Board.prototype.dropdownGems = function () {
+        var _this = this;
         var last_tween = null;
         for (var x = 0; x < this.board.cols; x++) {
             var gap = 0;
@@ -146,7 +150,8 @@ var Board = (function () {
                 else {
                     if (gap > 0) {
                         this.board.swap(x, y, x, y + gap);
-                        last_tween = gem.tweenTo({ y: gem.sprite.y + 48 * gap }, 1000);
+                        last_tween = gem.tweenTo({ y: gem.sprite.y + 48 * gap }, 300);
+                        last_tween.onComplete.addOnce(function () { debugger; _this.blocked = false; });
                     }
                 }
             }
@@ -265,4 +270,4 @@ var Board = (function () {
         return punctuations;
     };
     return Board;
-})();
+}());

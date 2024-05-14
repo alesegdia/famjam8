@@ -31,7 +31,7 @@ class Gem {
   }
 
   public tweenTo(obj: any, t?: number, type?: (k:number)=>number) {
-    return this.game.add.tween(this.sprite).to(obj, t || 4000, type || Phaser.Easing.Bounce.Out, true);
+    return this.game.add.tween(this.sprite).to(obj, t || 1000, type || Phaser.Easing.Bounce.Out, true);
   }
 
   public get gemType(): string {
